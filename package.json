@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": "14.17.x"
+  },
   "scripts": {
     "build": "webpack",
-    "start": "webpack serve --mode development"
+    "startx": "webpack serve --mode development",
+    "dev": "webpack --mode development && node index",
+    "start": "webpack && node index"
   },
   "repository": {
     "type": "git",
@@ -35,5 +40,7 @@
     "webpack-cli": "^4.9.1",
     "webpack-dev-server": "^4.4.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
