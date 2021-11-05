@@ -14,6 +14,7 @@ export class RateControls {
   $el = document.createElement('div');
   onChange: (info: RateConfig) => void;
   saveConfigDelay: NodeJS.Timeout;
+  changeDelay: NodeJS.Timeout;
 
   constructor(options: { onChange: (info: RateConfig) => void }) {
     if (options.onChange) this.onChange = options.onChange;
@@ -105,6 +106,11 @@ export class RateControls {
   }
 
   refresh() {
+    if (this.changeDelay) clearTimeout(this.changeDelay);
+    this.changeDelay = setTimeout(() => this.doRefresh(), 1000);
+  }
+
+  doRefresh() {
     this.config.maxScore =
       this.config.durationPercentMultiplier + //
       this.config.averageSecondsMultiplier +

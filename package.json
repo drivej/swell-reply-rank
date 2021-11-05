@@ -9,7 +9,7 @@
   "scripts": {
     "build": "webpack",
     "startx": "webpack serve --mode development",
-    "dev": "webpack --mode development && node index",
+    "dev": "webpack serve --mode development",
     "start": "webpack && node index"
   },
   "repository": {

@@ -55,15 +55,22 @@ export class Paginate {
   }
 
   set pageIndex(val: number) {
+    val = Math.max(0, Math.min(this.maxPages, val));
     if (val !== this._pageIndex) {
       this._pageIndex = val;
     }
-    this.startIndex = this._pageIndex * this._itemsPerPage;
+    this._startIndex = this._pageIndex * this._itemsPerPage;
+    this._endIndex = Math.min(this._total, this._startIndex + this._itemsPerPage);
+    this.triggerChange();
+  }
+
+  get maxPages() {
+    return Math.ceil(this._total / this._itemsPerPage);
   }
 
   get pageIndex() {
-    return Math.floor(this._startIndex % this._itemsPerPage);
-    // return this._pageIndex;
+    // return Math.floor(this._startIndex % this._itemsPerPage);
+    return this._pageIndex;
   }
 
   get startIndex(): number {
@@ -74,6 +81,7 @@ export class Paginate {
     if (val !== this._startIndex) {
       this._startIndex = Math.max(0, Math.min(this._total - this._itemsPerPage, val));
       this._endIndex = Math.min(this._total, this._startIndex + this._itemsPerPage);
+      this._pageIndex = Math.floor(this._startIndex % this._itemsPerPage);
       this.triggerChange();
     }
   }
