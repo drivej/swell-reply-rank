@@ -3,23 +3,23 @@ import { Paginate, PaginateEvent } from './Paginate';
 export class PaginationUI {
   paginate;
   $el = document.createElement('div');
-  // $pageIndex = document.createElement('div');
   $pageInfo: HTMLDivElement;
   $btnPrev: HTMLButtonElement;
   $btnNext: HTMLButtonElement;
 
   constructor(paginate: Paginate) {
     this.$el.innerHTML = `
-    <div style="display:flex;">
+    <div style="display:flex; align-items:center;">
       <div style="padding:5px" class="page-info">
       </div>
       <div style="padding:5px">
-        <button class="page-prev">Prev</button>
+        <button class="btn btn-secondary page-prev">Prev</button>
       </div>
       <div style="padding:5px">
-        <button class="page-next">Next</button>
+        <button class="btn btn-secondary page-next">Next</button>
       </div>
     </div>`;
+
     this.$pageInfo = this.$el.querySelector<HTMLDivElement>('.page-info');
     this.$btnPrev = this.$el.querySelector<HTMLButtonElement>('.page-prev');
     this.$btnNext = this.$el.querySelector<HTMLButtonElement>('.page-next');
@@ -34,10 +34,11 @@ export class PaginationUI {
 
     // this.$el.appendChild(this.$pageIndex);
     this.paginate = paginate;
-    paginate.on('change', (evt) => this.onChange(evt));
+    // paginate.on('change', (evt) => this.onChange(evt));
+    paginate.addEventListener('change', this.onChange.bind(this));
   }
 
   onChange(evt: PaginateEvent) {
-    this.$pageInfo.innerHTML = `${evt.info.startIndex}-${evt.info.endIndex} of ${evt.info.total}`;
+    this.$pageInfo.innerHTML = `${(evt.detail.startIndex + 1).toLocaleString()} &mdash; ${(evt.detail.endIndex + 1).toLocaleString()} of ${evt.detail.total.toLocaleString()} pp.${evt.detail.pageIndex + 1}`;
   }
 }

@@ -3,10 +3,12 @@ import '../node_modules/bootstrap/dist/css/bootstrap.css';
 import './assets/styles.css';
 import { CanvasLoader } from './components/CanvasLoader';
 import { FastTable } from './components/FastTable/FastTable';
-import { IFastColumnConfig, IFastRow } from './components/FastTable/IFastTable';
-import { timeago } from './components/Timeago';
-import { RateControls } from './ratings/RateControls';
-import { formatDuration, parseDate } from './ratings/utils';
+import { IFastRow } from './components/FastTable/IFastTable';
+import { LinearLoader } from './components/LinearLoader/LinearLoader';
+import { RateControls } from './components/RateControls';
+import { TABLE_CONFIG } from './config/TABLE_CONFIG';
+import { CustomRowData, RateConfig } from './interface/IApp';
+import { parseDate } from './utils/parseDate';
 
 // tabulator
 const GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5QQ_zIuzGqX14L9YNaqvkqaX9gUhx2r3wBUOsGH3g9UwA3A9EFOUF2ac8ikdnJSaJFGK8iipXkeuj/pub?output=csv';
@@ -14,135 +16,25 @@ const GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5QQ_zIuz
 export const MAX_DURATION = 60 * 5;
 const UTC_DAY = 24 * 60 * 60 * 100;
 
-export interface RateConfig {
-  maxScore: number;
-  durationPercentMultiplier: number;
-  averageSecondsMultiplier: number;
-  percentListenedMultiplier: number;
-  totalListensMultiplier: number;
-  ageDecayMultiplier: number;
-}
-
-interface CustomRowData {
-  id: string;
-  index: number;
-  title: string;
-  created: Date;
-  duration: number;
-  totalListens: number;
-  totalListensPercent: number;
-  secondsListened: number;
-  secondsListenedPercent: number;
-  percentListened: number;
-  durationPercent: number;
-  averageSeconds: number;
-  rating: number;
-  totalAgePercent: number;
-  age: number;
-}
-
 export class App {
   maxListens = 0;
   maxAge = 0;
   doChangeTimeout: NodeJS.Timeout;
   loader = new CanvasLoader();
-  //   itemsList: ItemsList;
-  controls: RateControls;
-  fastColumns: IFastColumnConfig<CustomRowData>[] = [
-    {
-      key: 'index',
-      sortRenderer: (row) => row.index,
-    },
-    {
-      key: 'title',
-      headClassName: (col) => 'text-nowrap',
-      cellClassName: () => 'nowrap',
-      cellTitleRenderer: (row, col) => row.id,
-      sortRenderer: (row) => row.title,
-      cellRenderer: (row) => `<span>${row.title}</span>`,
-    },
-    {
-      key: 'age',
-      cellClassName: () => 'text-nowrap',
-      sortRenderer: (row) => row.age, //created.getTime(),
-      //   cellRenderer: (row) => timeago(row.created) + (row.age / UTC_DAY).toFixed(0),
-      cellRenderer: (row) => timeago(row.created) + `&nbsp;(${(row.totalAgePercent * 100).toFixed(0)}%)`,
-    },
-    {
-      label: 'duration',
-      key: 'duration',
-      headClassName: (col) => 'text-nowrap',
-      cellClassName: () => 'text-end',
-      sortRenderer: (row) => row.duration,
-      cellRenderer: (row) => formatDuration(row.duration) + `&nbsp;(${(row.durationPercent * 100).toFixed(0)}%)`,
-    },
-    {
-      label: 'Sec. Listened',
-      key: 'secondsListened',
-      headClassName: (col) => 'text-nowrap',
-      cellClassName: () => 'text-end',
-      sortRenderer: (row) => row.secondsListened,
-      cellRenderer: (row) => formatDuration(row.secondsListened) + `&nbsp;(${(row.secondsListenedPercent * 100).toFixed(0)}%)`,
-    },
-    {
-      label: '% Listened',
-      key: 'percentListened',
-      headClassName: (col) => 'text-nowrap',
-      cellClassName: () => 'text-end',
-      sortRenderer: (row) => row.percentListened,
-      cellRenderer: (row) => (row.percentListened * 100).toFixed(0) + '%',
-    },
-    {
-      label: 'total listens',
-      key: 'totalListens',
-      headClassName: (col) => 'text-nowrap',
-      cellClassName: () => 'text-end text-nowrap',
-      sortRenderer: (row) => row.totalListens,
-      cellRenderer: (row) => row.totalListens + `&nbsp;(${(row.totalListensPercent * 100).toFixed(0)}%)`,
-    },
-
-    {
-      label: 'rating',
-      key: 'rating',
-      headClassName: (col) => 'text-nowrap',
-      cellClassName: () => 'text-end bg-secondary text-white',
-      sortRenderer: (row) => row.rating,
-      cellRenderer: (row) => row.rating.toFixed(2),
-    },
-    {
-      label: 'graph',
-      key: 'graph',
-      headClassName: (col) => 'text-nowrap',
-      sortRenderer: (row) => 1,
-      cellRenderer: (row) => `
-      <div class="vis-bar">
-          <div class="vis-duration" style="width:${row.durationPercent * 100}%">
-            <div class="vis-position" style="left:${row.percentListened * 100}%"></div>
-          </div>
-      </div>
-      <div class="vis-listensLength" style="width:${row.totalListensPercent * 100}%;" />`,
-    },
-  ];
-  fastTable: FastTable<CustomRowData>;
+  configLoader = new LinearLoader();
+  controls: RateControls = new RateControls({ onChange: this.onChange.bind(this) });
+  fastTable = new FastTable<CustomRowData>({
+    ...TABLE_CONFIG,
+    onClickRow: this.onClickRow.bind(this),
+  });
 
   constructor() {
     document.body.appendChild(this.loader.$div);
-
-    this.controls = new RateControls({ onChange: this.onChange.bind(this) });
     document.body.appendChild(this.controls.$el);
-
-    this.fastTable = new FastTable<CustomRowData>({
-      tableClassName: 'table',
-      columns: this.fastColumns,
-      rows: [],
-      itemsPerPage: 16,
-      onClickRow: this.onClickRow.bind(this),
-      wheelScroll: true,
-    });
+    document.body.appendChild(this.configLoader.$el);
     document.body.appendChild(this.fastTable.$table);
-
     window.addEventListener('resize', this.handleResize.bind(this));
-
+    this.configLoader.addEventListener('complete', this.doChange.bind(this));
     this.importData(GOOGLE_SHEET);
   }
 
@@ -240,13 +132,11 @@ export class App {
   }
 
   onChange(config: RateConfig) {
-    if (this.doChangeTimeout) clearTimeout(this.doChangeTimeout);
-    this.doChangeTimeout = setTimeout(() => this.doChange(), 50);
+    this.configLoader.start(1000);
   }
 
   doChange() {
     if (!this.fastTable) return;
-    console.log('update rating');
     // why while when you can duff? ...from an anonymous donor to Jeff Greenberg's site
     let iterations = this.fastTable.rows.length;
     let i = 0;
@@ -254,7 +144,6 @@ export class App {
     while (n--) {
       this.updateRowRating(i++);
     }
-
     n = Math.floor(iterations / 8);
     while (n--) {
       this.updateRowRating(i++);
@@ -266,7 +155,6 @@ export class App {
       this.updateRowRating(i++);
       this.updateRowRating(i++);
     }
-
     this.fastTable.updateColumn('rating');
     this.fastTable.sortOnColumn('rating', -1);
   }

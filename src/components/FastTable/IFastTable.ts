@@ -1,16 +1,11 @@
 export interface IFastTableConfig<CustomData> {
-  tableClassName?:string;
-  wheelScroll?:boolean;
+  tableClassName?: string;
+  wheelScroll?: boolean;
   rows: CustomData[];
   columns: IFastColumnConfig<CustomData>[];
   itemsPerPage?: number;
   onClickRow?(row: IFastRow<CustomData>): void;
 }
-
-// interface IFastTable<CustomData> {
-//   rows: IFastRow<CustomData>[];
-//   columns: (IFastColumnPrivate & CustomData)[];
-// }
 
 export interface IFastColumnConfig<CustomData> {
   key: string;
@@ -37,7 +32,6 @@ export interface IFastRowPrivate {
   __el?: HTMLTableRowElement;
   __displayRendered: boolean;
   __cellsRendered: boolean;
-  // __index: number;
   __visible: boolean;
   __cells: IFastCell[];
   __haystack: string;

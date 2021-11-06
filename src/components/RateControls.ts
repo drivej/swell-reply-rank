@@ -1,4 +1,4 @@
-import { RateConfig } from '../App';
+import { RateConfig } from '../interface/IApp';
 import { ControlInput } from './ControlInput';
 
 export class RateControls {
@@ -94,20 +94,11 @@ export class RateControls {
     $controls.querySelector('#controls-table').appendChild(control4.$el);
     $controls.querySelector('#controls-table').appendChild(control5.$el);
 
-    // $controls.querySelector('#export-btn').addEventListener('click', () => {
-    // console.log(JSON.stringify(this.items.map((item) => item.export())));
-    // });
-
-    // $controls.querySelector('#save-btn').addEventListener('click', () => this.save());
-    // $controls.querySelector('#load-btn').addEventListener('click', () => this.load());
-    // $controls.querySelector('#refresh-btn').addEventListener('click', () => this.refresh());
-
     this.$el.appendChild($controls);
   }
 
   refresh() {
-    if (this.changeDelay) clearTimeout(this.changeDelay);
-    this.changeDelay = setTimeout(() => this.doRefresh(), 1000);
+    this.doRefresh();
   }
 
   doRefresh() {
@@ -142,7 +133,6 @@ export class RateControls {
   }
 
   save() {
-    // window.localStorage.setItem('data', JSON.stringify(this.items.map((item: { export: () => any; }) => item.export())));
     window.localStorage.setItem('data', JSON.stringify(this.config));
   }
 }

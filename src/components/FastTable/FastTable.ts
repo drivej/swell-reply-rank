@@ -1,5 +1,5 @@
 import { IFastColumn, IFastColumnConfig, IFastRow, IFastTableConfig } from './IFastTable';
-import { Paginate, PaginateInfo } from './Paginate';
+import { Paginate } from './Paginate';
 import { PaginationUI } from './PaginationUI';
 
 export class FastTable<CustomData> {
@@ -28,9 +28,8 @@ export class FastTable<CustomData> {
     this.$table.className = config?.tableClassName ?? '';
 
     this.pagination = new Paginate({ total: config.rows.length, itemsPerPage: config.itemsPerPage ?? 10 });
-    this.pagination.on('change', this.onChangePagination.bind(this));
+    this.pagination.addEventListener('change', this.onChangePagination.bind(this));
     this.paginateUI = new PaginationUI(this.pagination);
-    // this.$tfoot.appendChild(this.paginateUI.$el);
 
     this.columns = config.columns.map(this.initColumn.bind(this));
     this.rows = config.rows.map(this.initRow.bind(this));
@@ -42,11 +41,14 @@ export class FastTable<CustomData> {
     this.pagination.triggerChange();
 
     if (config.wheelScroll) {
-      this.$tbody.addEventListener('wheel', (e: WheelEvent) => {
-        this.pagination.startIndex += e.deltaY > 0 ? 1 : -1;
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      });
+      this.$tbody.addEventListener('wheel', this.handleWheel.bind(this));
+    }
+  }
+
+  dispose() {
+    if (this.$table.parentElement) {
+      this.$table.parentElement.removeChild(this.$table);
+      this.pagination.removeEventListener('change', this.onChangePagination.bind(this));
     }
   }
 
@@ -77,12 +79,16 @@ export class FastTable<CustomData> {
     };
   }
 
+  handleWheel(e: WheelEvent) {
+    this.pagination.startIndex += e.deltaY > 0 ? 0.2 : -0.2;
+    e.preventDefault();
+  }
+
   handleClickHeader(evt: Event) {
     const colKey = (evt.currentTarget as HTMLTableCellElement).dataset.colKey;
     const col = this.getColumn(colKey);
     col.__sortDirection *= -1;
     this.sortOnColumn(colKey, col.__sortDirection);
-    console.log(col, col.__sortDirection);
   }
 
   handleClickRow(evt: Event) {
@@ -215,12 +221,11 @@ export class FastTable<CustomData> {
   // features
   //
 
-  onChangePagination(info: PaginateInfo) {
+  onChangePagination(evt: any) {
     this.renderBody();
   }
 
   sortOnColumn(key: string, dir = 1) {
-    console.log('sortOnColumn', key, dir, this.rows.length);
     this.lastSortKey = key;
     this.lastSortDir = dir;
     const col = this.getColumn(key);
@@ -276,6 +281,6 @@ export class FastTable<CustomData> {
   }
 
   defaultSortRenderer(row: IFastRow<CustomData>, col: IFastColumn<CustomData>) {
-    return `${(row as any)[col.key]}`;
+    return (row as any)[col.key];
   }
 }

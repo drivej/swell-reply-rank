@@ -33,6 +33,7 @@ export class CanvasLoader {
   ticking = false;
   requestFrame: number;
   timeout: NodeJS.Timeout;
+  keys: string[] = [];
 
   constructor() {
     Object.assign(this.$div.style, {
@@ -43,6 +44,8 @@ export class CanvasLoader {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
+      opacity: 0,
+      visibility: 'hidden',
     });
     this.$div.appendChild(this.$cvs);
     this.$cvs.width = 10 + (this.radius + this.dotRadius) * 2;
@@ -69,9 +72,15 @@ export class CanvasLoader {
     this.ctx.globalAlpha = 1;
   }
 
-  start() {
+  start(key?: string) {
+    if (key) {
+      if (this.keys.indexOf(key) === -1) {
+        this.keys.push(key);
+      }
+    }
     if (!this.ticking) {
-      this.$div.style.display = 'flex';
+      (this.$div.style.transition = 'opacity 0.3s ease-in 0s, visibility 0s ease-in 0s'), (this.$div.style.opacity = '1');
+      this.$div.style.visibility = 'visible';
       this.tick();
     }
   }
@@ -80,12 +89,23 @@ export class CanvasLoader {
     this.drawDot();
     this.fade();
     this.dotIndex++;
-    this.timeout = setTimeout(() => requestAnimationFrame(this.tick.bind(this)), 50);
+    this.timeout = setTimeout(() => {
+      this.requestFrame = requestAnimationFrame(this.tick.bind(this));
+    }, 50);
   }
 
-  stop() {
-    this.$div.style.display = 'none';
-    cancelAnimationFrame(this.requestFrame);
-    if (this.timeout) clearTimeout(this.timeout);
+  stop(key?: string) {
+    if (key) {
+      const i = this.keys.indexOf(key);
+      if (i > -1) {
+        this.keys.splice(i, 1);
+      }
+    }
+    if (this.keys.length === 0) {
+      (this.$div.style.transition = 'opacity 0.3s ease-in 0s, visibility 0s ease-in 0.3s'), (this.$div.style.visibility = 'hidden');
+      this.$div.style.opacity = '0';
+      cancelAnimationFrame(this.requestFrame);
+      if (this.timeout) clearTimeout(this.timeout);
+    }
   }
 }
